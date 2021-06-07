@@ -18,19 +18,21 @@ else
   #Make a backup folder.
   if [ -d ./backup/ ];then mkdir ./backup/;fi
   #Replace system networking files with prewritten files in ./modified/.
-  if [ -e /etc/dhcpcd.conf ];then mv /etc/dhcpcd.conf ./backup/dhcpcd.conf;fi
-  mv ./modified/dhcpcd.conf /etc/dhcpcd.conf
-  if [ -e /etc/dnsmasq.conf ];then mv /etc/dnsmasq.conf ./backup/dnsmasq.conf;fi
-  mv ./modified/dnsmasq.conf /etc/dnsmasq.conf
-  if [ -e /etc/hostapd/hostapd.conf ];then mv /etc/hostapd/hostapd.conf ./backup/hostapd.conf;fi
-  mv ./modified/hostapd.conf /etc/hostapd/hostapd.conf
-  if [ -e /etc/default/hostapd ];then mv /etc/default/hostapd ./backup/hostapd;fi
-  mv ./modified/hostapd /etc/default/hostapd
-  if [ -e /etc/sysctlconf ];then mv /etc/sysctl.conf ./backup/sysctl.conf;fi
-  mv ./modified/sysctl.conf /etc/sysctl.conf
+  if [ -e /etc/dhcpcd.conf ];then cp /etc/dhcpcd.conf ./backup/dhcpcd.conf;fi
+  cp ./modified/dhcpcd.conf /etc/dhcpcd.conf
+  if [ -e /etc/dnsmasq.conf ];then cp /etc/dnsmasq.conf ./backup/dnsmasq.conf;fi
+  cp ./modified/dnsmasq.conf /etc/dnsmasq.conf
+  if [ -e /etc/hostapd/hostapd.conf ];then cp /etc/hostapd/hostapd.conf ./backup/hostapd.conf;fi
+  cp ./modified/hostapd.conf /etc/hostapd/hostapd.conf
+  if [ -e /etc/default/hostapd ];then cp /etc/default/hostapd ./backup/hostapd;fi
+  cp ./modified/hostapd /etc/default/hostapd
+  if [ -e /etc/sysctl.conf ];then cp /etc/sysctl.conf ./backup/sysctl.conf;fi
+  cp ./modified/sysctl.conf /etc/sysctl.conf
+  if [ -e /etc/iptables.ipv4.nat ];then cp /etc/iptables.ipv4.nat ./backup/iptables.ipv4.nat;fi
+  if [ -e ~/.bashrc ];then cp ~/.bashrc ./backup/.bashrc;fi
   #Configure the builtin iptables firewall.
   iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-  sh -c 'iptables-save>/etc/iptables.ipv4.nat'
+  iptables-save>/etc/iptables.ipv4.nat
   #Restore iptables configuration on boot.
   echo 'iptables-restore</etc/iptables.ipv4.nat'>>~/.bashrc
   #Start daemons hostapd and dnsmasq.
@@ -38,6 +40,6 @@ else
   #Create the file for discerning whether the interfaces have been configured.
   touch ./enabled
   #Reboot the device for the changes to take effect
-  reboot
+  reboot now
 fi
 
