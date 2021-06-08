@@ -2,16 +2,16 @@
 #For development purposes only, do not include in releases.
 
 Bash
-dismanet_enable
-dismanet_disable ABR
-dismanet_connect CHK
+dismanet_enable CHK
+dismanet_disable CHK
+dismanet_connect
 dismanet_disconnect CHK
-dismanet_send
+dismanet_send CHK
 
 Python
 reset_dht CHK
-assign_ip ACK
 update_dht CHK
 remove_dht CHK
 create_dht CHK
+multipath_route
 

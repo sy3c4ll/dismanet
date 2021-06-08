@@ -31,7 +31,7 @@ for i in _dht.index:
     dht=dht.append(_dht.loc[i])
 #If a ping time has also been given in the command line arguments
 if len(sys.argv)==4:
-  #Gather the two IP addresses and the ping time from the arguments.
+  #Gather the two BSSIDs and the ping time from the arguments.
   ip1,ip2,t=sys.argv[1],sys.argv[2],float(sys.argv[3])
   #If the scanned peer is unknown to this device
   if ip2 not in dht.index:

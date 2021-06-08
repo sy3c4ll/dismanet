@@ -1,9 +1,8 @@
 #A list of all transmission codes used for communication between peers.
 #For development purposes only, do not include in releases.
 
-0: Send request for DHT of host
-1: Send request for assigned virtual IP address of host
-2: Notify DHT transmission
-3: Notify file transmission
-4: Notify disconnection
+1: Notify file transmission
+2: Notify disconnection
+3: Notify DHT transmission
+4: Send request for DHT of host
 

@@ -24,38 +24,33 @@ else
     if !((i%50000));then
       #Even if the connection has already been established,
       #the script will scan periodically to update the DHT.
-      #If this is the case, reset all ping times from and to this device to infinity
+      #If this is the case, reset all ping times from and to this device to positive infinity
       #in case one has moved out of range.
-      if [ -e ./assigned_ip ];then python ./reset_dht.py;fi
+      if [ -e ./dht ];then python ./reset_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
       #This kinda complicated one-liner will save a list of the BSSIDs of all networks with the SSID 'dismanet'.
       HOSTLIST=($(nmcli device wifi list|grep dismanet|awk '{$1=$1};1'|cut -d ' ' -f 1|tr '\n' ' '))
       #For every wlan1 found
       for BSSID in $HOSTLIST;do
         #Connect.
         nmcli device wifi connect $BSSID password dismanet ifname wlan0
-        #If this is the first encounter with a mesh device,
-        #first generate a mesh IP address.
-        if [ ! -e ./assigned_ip ];then python ./assign_ip.py;fi
         #Ask the peer for their DHT.
-        echo 0|ncat --send-only 192.168.19.1
+        echo 4|ncat --send-only 192.168.19.1
         #Listen for a reply, and save it to a temporary DHT file.
         ncat -l>./.dht
         #If this is first encounter and the contacter does not have a DHT,
         #use the peer's DHT for their own.
         if [ ! -e ./dht ];then cp ./.dht ./dht;fi
-        #Ask the peer for their assigned IP address.
-        echo 1|ncat --send-only 192.168.19.1
         #Try pinging the peer to gather the ping times, then
         #update the DHT with the temporary DHT and ping times for the peer.
         #See update_dht.py for specific rules.
-        python ./update_dht.py $(echo ./assigned_ip) $(ncat -l) $(ping -c 3 192.168.19.1|tail -1|awk '{print $4}'|cut -d '/' -f 2)
+        python ./update_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z) $BSSID $(ping -c 3 192.168.19.1|tail -1|awk '{print $4}'|cut -d '/' -f 2)
         #Disconnect. Too many simultaneous connections have proved unstable in testing.
         nmcli device disconnect wlan0
       done
       #For every wlan1 found
       for BSSID in $HOSTLIST;do
         #Tell the peer that the contacter is trying to send their DHT.
-        echo 2|ncat --send-only 192.168.19.1
+        echo 3|ncat --send-only 192.168.19.1
         #Send the DHT.
         ncat --send-only 192.168.19.1<./dht
       done
@@ -65,58 +60,62 @@ else
     #A simple switch statement for the code received.
     #See codes.txt for a full list of codes.
     case $CODE in
-      #If the peer has requested a DHT
-      0)
-        #If a DHT does not already exist, the device claims itself initiator and
-        #creates one with itself as the only entry.
-        if [ ! -e ./dht ];then
-          python ./assign_ip.py
-          python ./create_dht.py
-        fi
-        #Send back the DHT.
-        ncat --send-only 192.168.19.1<./dht
-        ;;
-      #If the peer has requested the device's mesh IP
-      1)
-        #If an IP has not already been assigned (which should not happen, but still)
-        #assign one now.
-        if [ ! -e ./assigned_ip ];then python ./assign_ip.py;fi
-        #Send back the IP address.
-        ncat --send-only 192.168.19.1<./assigned_ip
-        ;;
-      #If the peer has notified the device of an incoming DHT
-      2)
-        #Listen for the DHT, then save it to a temporary DHT file.
-        ncat -l>./.dht
-        #Update the DHT with the received temporary DHT file.
-        python ./update_dht.py
-        ;;
       #If the peer has notified the device of an incoming transmission
-      3)
-        #Incomplete.
-        #TODO
+      1)
+        #Receive route from peer.
+        ROUTE=$(ncat -l)
+        #If the next peer is itself
+        if [ $ROUTE[1]=$(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z) ];then
+          #TODO
+        else
+          #Connect to the next peer.
+          nmcli device wifi connect $ROUTE[1] password dismanet ifname wlan0
+          #Relay transmission to the next peer.
+          echo 1|ncat --send-only 192.168.19.1
+          #Send the peer the route inforation.
+          echo ${ROUTE[@]:1}|ncat --send-only 192.168.19.1
+          #Relay file to the next peer.
+          ncat -l|ncat --send-only 192.168.19.1
+          #Disconnect.
+          nmcli device disconnect wlan0
+        fi
         ;;
       #If the peer has announced a disconnection
-      4)
-        #Listen for the mesh IP of the disconnected device.
-        TARGET_IP=$(ncat -l)
+      2)
+        #Listen for the BSSID of the disconnected device.
+        TARGET_BSSID=$(ncat -l)
         #Attempt to delete the device's entry from the DHT.
         #If the entry did exist, and was successfully removed
-        if [ $(python ./remove_dht.py TARGET_IP)='0' ];then
+        if [ $(python ./remove_dht.py TARGET_BSSID)='0' ];then
           #Scour the network for peers.
           HOSTLIST=($(nmcli device wifi list|grep dismanet|awk '{$1=$1};1'|cut -d ' ' -f 1|tr '\n' ' '))
           #For every peer
           for BSSID in $HOSTLIST;do
             #Connect.
-            nmcli device wifi connect $BSSID password dismanet ifname dismanet0
+            nmcli device wifi connect $BSSID password dismanet ifname wlan0
             #Notify the peer of the disconnection.
-            echo 4|ncat --send-only 192.168.19.1
-            #Send them the mesh IP of the disconnected device.
-            echo $TARGET_IP|ncat --send-only 192.168.19.1
+            echo 2|ncat --send-only 192.168.19.1
+            #Send them the BSSID of the disconnected device.
+            echo $TARGET_BSSID|ncat --send-only 192.168.19.1
           done
         fi
         #If the entry did not exist, the device has already been notified of the disconenction.
         #Stop broadcasting the disconnection info.
+        ;;
+      #If the peer has notified the device of an incoming DHT
+      3)
+        #Listen for the DHT, then save it to a temporary DHT file.
+        ncat -l>./.dht
+        #Update the DHT with the received temporary DHT file.
+        python ./update_dht.py
+        ;;
+      #If the peer has requested a DHT
+      4)
+        #If a DHT does not already exist, the device claims itself initiator and
+        #creates one with itself as the only entry.
+        if [ ! -e ./dht ];then python ./create_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
+        #Send back the DHT.
+        ncat --send-only 192.168.19.1<./dht
         ;;
     esac
   done
