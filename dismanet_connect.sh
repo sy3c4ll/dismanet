@@ -50,9 +50,9 @@ else
       #For every wlan1 found
       for BSSID in $HOSTLIST;do
         #Tell the peer that the contacter is trying to send their DHT.
-        echo 3|ncat --send-only 192.168.19.1
+        echo 3|ncat 192.168.19.1
         #Send the DHT.
-        ncat --send-only 192.168.19.1<./dht
+        ncat 192.168.19.1<./dht
       done
     fi
     #When not scanning for peers, listen for codes from new and existing devices.
@@ -66,16 +66,25 @@ else
         ROUTE=$(ncat -l)
         #If the next peer is itself
         if [ $ROUTE[1]=$(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z) ];then
+          #Receive the fragment.
+          ncat -l>./unidentified.part
+          #Save the annotation marking the fragment's order.
+          i=$(tail -n 1 ./unidentified.part)
+          #Rename the file to show its order.
+          mv ./unidentified.part ./fragment$i.part
+          #Remove the annotation.
+          sed -i '$ d' ./fragment$i.part
+          #Concatenate received files in order.
           #TODO
         else
           #Connect to the next peer.
           nmcli device wifi connect $ROUTE[1] password dismanet ifname wlan0
           #Relay transmission to the next peer.
-          echo 1|ncat --send-only 192.168.19.1
+          echo 1|ncat 192.168.19.1
           #Send the peer the route inforation.
-          echo ${ROUTE[@]:1}|ncat --send-only 192.168.19.1
+          echo ${ROUTE[@]:1}|ncat 192.168.19.1
           #Relay file to the next peer.
-          ncat -l|ncat --send-only 192.168.19.1
+          ncat -l|ncat 192.168.19.1
           #Disconnect.
           nmcli device disconnect wlan0
         fi
@@ -94,9 +103,9 @@ else
             #Connect.
             nmcli device wifi connect $BSSID password dismanet ifname wlan0
             #Notify the peer of the disconnection.
-            echo 2|ncat --send-only 192.168.19.1
+            echo 2|ncat 192.168.19.1
             #Send them the BSSID of the disconnected device.
-            echo $TARGET_BSSID|ncat --send-only 192.168.19.1
+            echo $TARGET_BSSID|ncat 192.168.19.1
           done
         fi
         #If the entry did not exist, the device has already been notified of the disconenction.
@@ -115,7 +124,7 @@ else
         #creates one with itself as the only entry.
         if [ ! -e ./dht ];then python ./create_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
         #Send back the DHT.
-        ncat --send-only 192.168.19.1<./dht
+        ncat 192.168.19.1<./dht
         ;;
     esac
   done

@@ -14,9 +14,9 @@ elif [ -e ./dht ];then
     #Connect.
     nmcli device wifi connect $BSSID password dismanet ifname wlan0
     #Notify them of the disconnection.
-    echo 2|ncat --send-only 192.168.19.1
+    echo 2|ncat 192.168.19.1
     #Send them the device's BSSID.
-    ncat --send-only 192.168.19.1<$(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z)
+    ncat 192.168.19.1<$(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z)
   done
   #Remove files associated with network activity.
   rm ./active ./dht

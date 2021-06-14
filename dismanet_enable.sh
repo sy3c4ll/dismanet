@@ -10,7 +10,7 @@ if [ $(whoami)!=root ];then echo 'You must be root to enable DisMANET';fi
 if [ -e ./enabled ];then echo 'DisMANET is already enabled'
 else
   #Install required packages.
-  apt-get install -y hostapd dnsmasq
+  apt-get install -y hostapd dnsmasq nmap
   #First, stop networking daemons.
   systemctl stop hostapd dnsmasq
   #Add networking interface wlan1 of type AP to physical device phy0.
