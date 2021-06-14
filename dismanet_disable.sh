@@ -1,5 +1,6 @@
 #The script concerned with disabling the wlan1 AP device and
 #returning the system networking file to normal.
+#기기설정 해제의 스크립트.
 
 #!/bin/bash
 #Since the script deals with /etc/ files, it must be run as root.
@@ -12,6 +13,7 @@ else
   #Stop networking daemons.
   systemctl stop hostapd dnsmasq
   #Restore system files from backup. If they did not exist before modification, remove the modified files.
+  #파일 복구.
   if [ -e ./backup/dhcpcd.conf ];then cp ./backup/dhcpcd.conf /etc/dhcpcd.conf;else rm /etc/dnsmasq.conf;fi
   if [ -e ./backup/dnsmasq.conf ];then cp ./backup/dnsmasq.conf /etc/dnsmasq.conf;else rm /etc/dnsmasq.conf;fi
   if [ -e ./backup/hostapd.conf ];then cp ./backup/hostapd.conf /etc/hostapd/hostapd.conf;else rm /etc/hostapd/hostapd.conf;fi
@@ -24,6 +26,7 @@ else
   #Delete the file for discerning whether the network has been configured.
   rm ./active
   #Reboot the device for the changes to take effect.
+  #재부팅.
   reboot now
 fi
 

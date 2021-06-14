@@ -1,6 +1,7 @@
 #The script concerned with configuring the networking devices.
 #Before activating the network, two networking devices
 #wlan0 of type managed and wlan1 of type AP must exist.
+#기본설정 스크립트.
 
 #!/bin/bash
 #Since the script messes with networking devices and /etc/ files,
@@ -10,6 +11,7 @@ if [ $(whoami)!=root ];then echo 'You must be root to enable DisMANET';fi
 if [ -e ./enabled ];then echo 'DisMANET is already enabled'
 else
   #Install required packages.
+  #패키지 설치.
   apt-get install -y hostapd dnsmasq nmap
   #First, stop networking daemons.
   systemctl stop hostapd dnsmasq
@@ -36,10 +38,12 @@ else
   #Restore iptables configuration on boot.
   echo 'iptables-restore</etc/iptables.ipv4.nat'>>~/.bashrc
   #Start daemons hostapd and dnsmasq.
+  #기기 설정.
   systemctl start hostapd dnsmasq
   #Create the file for discerning whether the interfaces have been configured.
   touch ./enabled
   #Reboot the device for the changes to take effect
+  #재부팅.
   reboot now
 fi
 
