@@ -1,8 +1,0 @@
-#A list of all transmission codes used for communication between peers.
-#For development purposes only, do not include in releases.
-
-1: Notify file transmission
-2: Notify disconnection
-3: Notify DHT transmission
-4: Send request for DHT of host
-

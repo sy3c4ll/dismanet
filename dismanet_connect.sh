@@ -31,7 +31,7 @@ else
       #If this is the case, reset all ping times from and to this device to positive infinity
       #in case one has moved out of range.
       #이미 연결되었으면 토폴로지 업데이트로 간주하고 재측정 항목 삭제.
-      if [ -e ./dht ];then python ./reset_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
+      if [ -e ./dht ];then python ./scripts/reset_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
       #This kinda complicated one-liner will save a list of the BSSIDs of all networks with the SSID 'dismanet'.
       HOSTLIST=($(nmcli device wifi list|grep dismanet|awk '{$1=$1};1'|cut -d ' ' -f 1|tr '\n' ' '))
       #For every wlan1 found
@@ -50,7 +50,7 @@ else
         #update the DHT with the temporary DHT and ping times for the peer.
         #See update_dht.py for specific rules.
         #연결한 상대로부터 DHT를 받고, 상대까지의 연결시간을 측정해 토폴로지 업데이트.
-        python ./update_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z) $BSSID $(ping -c 3 192.168.19.1|tail -1|awk '{print $4}'|cut -d '/' -f 2)
+        python ./scripts/update_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z) $BSSID $(ping -c 3 192.168.19.1|tail -1|awk '{print $4}'|cut -d '/' -f 2)
         #Disconnect. Too many simultaneous connections have proved unstable in testing.
         nmcli device disconnect wlan0
       done
@@ -78,18 +78,14 @@ else
         #If the next peer is itself
         #자신이 목적지이면
         if [ $ROUTE[1]=$(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z) ];then
-          #Receive the fragment.
+          #Receive the file.
           ncat -l>./unidentified.part
-          #Save the annotation marking the fragment's order.
+          #Save the original file name.
           i=$(tail -n 1 ./unidentified.part)
           #Rename the file to show its order.
-          mv ./unidentified.part ./fragment$i.part
+          mv ./unidentified.part $i
           #Remove the annotation.
-          #파일 순서 숙지.
-          sed -i '$ d' ./fragment$i.part
-          #Concatenate received files in order.
-          #파일을 순서대로 붙이기.
-          #TODO
+          sed -i '$ d' $i
         else
           #Connect to the next peer.
           nmcli device wifi connect $ROUTE[1] password dismanet ifname wlan0
@@ -136,7 +132,7 @@ else
         ncat -l>./.dht
         #Update the DHT with the received temporary DHT file.
         #DHT 업데이트.
-        python ./update_dht.py
+        python ./scripts/update_dht.py
         ;;
       #If the peer has requested a DHT
       #기기의 DHT를 요청하면
@@ -144,7 +140,7 @@ else
         #If a DHT does not already exist, the device claims itself initiator and
         #creates one with itself as the only entry.
         #없으면 자신만 존재하는 DHT 생성.
-        if [ ! -e ./dht ];then python ./create_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
+        if [ ! -e ./dht ];then python ./scripts/create_dht.py $(iw dev wlan1 info|grep addr|awk '{$1=$1};1'|cut -d ' ' -f 2|tr a-z A-Z);fi
         #Send back the DHT.
         #DHT 전송.
         ncat 192.168.19.1<./dht

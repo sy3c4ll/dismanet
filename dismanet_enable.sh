@@ -12,7 +12,8 @@ if [ -e ./enabled ];then echo 'DisMANET is already enabled'
 else
   #Install required packages.
   #패키지 설치.
-  apt-get install -y hostapd dnsmasq nmap
+  apt-get install -y hostapd dnsmasq nmap python
+  pip install pandas
   #First, stop networking daemons.
   systemctl stop hostapd dnsmasq
   #Add networking interface wlan1 of type AP to physical device phy0.
