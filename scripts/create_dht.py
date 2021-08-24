@@ -13,5 +13,5 @@ import sys
 dht=pd.DataFrame([[0.0]],index=[sys.argv[1]],columns=[sys.argv[1]])
 #Save the DHT to file. The 'index=False' option must be included
 #for the DHT to be saved correctly, albeit with the loss of the index.
-dht.to_csv('./dht',index=False)
+dht.to_csv('../dht',index=False)
 

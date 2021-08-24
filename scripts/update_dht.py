@@ -10,10 +10,10 @@ import sys
 if len(sys.argv)!=1 and len(sys.argv)!=4:
   raise OSError('Invalid number of arguments')
 #Read the DHT from file.
-dht=pd.read_csv('./dht')
+dht=pd.read_csv('../dht')
 dht.index=dht.columns
 #Read the received DHT from file.
-_dht=pd.read_csv('./.dht')
+_dht=pd.read_csv('../.dht')
 _dht.index=_dht.columns
 #For every entry in the original DHT
 for i in dht.index:
@@ -41,5 +41,5 @@ if len(sys.argv)==4:
   #Update the entry for the ping time between the two peers.
   dht.at[ip1,ip2]=dht.at[ip2,ip1]=t
 #Save the updated DHT to file.
-dht.to_csv('dht',index=False)
+dht.to_csv('../dht',index=False)
 

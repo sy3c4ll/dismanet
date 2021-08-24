@@ -7,7 +7,7 @@ import sys
 if len(sys.argv)!=2:
   raise OSError('Invalid number of arguments')
 #Read the DHT from file.
-dht=pd.read_csv('./dht')
+dht=pd.read_csv('../dht')
 #The index has been removed in the file, but it is identical to the columns.
 #Use the columns as the index also.
 dht.index=dht.columns
@@ -22,5 +22,5 @@ else:
   #The deletion was unsuccessful, return 127.
   print(127)
 #Save the updated DHT to file.
-dht.to_csv('./dht',index=False)
+dht.to_csv('../dht',index=False)
 

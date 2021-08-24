@@ -14,7 +14,7 @@ def dist(v):
     return s
 if len(sys.argv)!=3:
   raise OSError('Invalid number of arguments')
-dht=pd.read_csv('./dht')
+dht=pd.read_csv('../dht')
 dht.index=dht.columns
 spt,queue=[None]*len(dht.index),[list(dht.index).index(sys.argv[1])]
 while queue:
